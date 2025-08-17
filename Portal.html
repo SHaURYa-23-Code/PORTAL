@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xavier's College Portal</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f4f8;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 400px;
+            margin: 60px auto;
+            background: #fff;
+            padding: 32px 24px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #2e8b57;
+            text-align: center;
+        }
+        label {
+            display: block;
+            margin-top: 16px;
+        }
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 8px;
+            margin-top: 6px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            width: 100%;
+            margin-top: 24px;
+            padding: 10px;
+            background: #2e8b57;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .error {
+            color: #c00;
+            margin-top: 12px;
+            text-align: center;
+        }
+        .result {
+            margin-top: 24px;
+            background: #e6ffe6;
+            padding: 16px;
+            border-radius: 6px;
+        }
+        .logo {
+            display: block;
+            margin: 0 auto 16px auto;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        /* Remove lock and animation styles */
+    </style>
+</head>
+<body>
+    <!-- Login Container -->
+    <div class="container" id="login-container">
+        <!-- College Logo -->
+        <img src="https://erp.sxcpatna.edu.in/Content/assets/img/hcc-img/sxclogo.png" alt="Xavier's Logo" class="logo">
+        <h2>SXCMT</h2>
+        <!-- Login Form -->
+        <form id="login-form">
+            <label for="userid">Username</label> <!-- Changed from Candidate ID to Username -->
+            <input type="text" id="userid" required>
+            <label for="password">Password</label>
+            <input type="password" id="password" required>
+            <button type="submit">Login</button>
+            <div class="error" id="error-msg"></div>
+        </form>
+    </div>
+    <!-- Dashboard Container (after login) -->
+    <div class="container" id="dashboard-container" style="display:none;">
+        <!-- Flex row for welcome and hamburger menu, hamburger on right -->
+        <div style="display: flex; align-items: center; margin-bottom: 16px; justify-content: space-between;">
+            <!-- Welcome message on the left -->
+            <h2 style="margin: 0; font-size: 1.5em;">
+                Welcome, <span id="student-name"></span>!
+            </h2>
+            <!-- Hamburger Menu Button aligned right -->
+            <button id="menu-toggle" style="background:none;border:none;outline:none;cursor:pointer;width:40px;height:40px;margin-left:12px;">
+                <!-- Simple Hamburger Icon (SVG) -->
+                <svg width="32" height="32" viewBox="0 0 32 32">
+                    <rect y="6" width="32" height="4" rx="2" fill="#2e8b57"/>
+                    <rect y="14" width="32" height="4" rx="2" fill="#2e8b57"/>
+                    <rect y="22" width="32" height="4" rx="2" fill="#2e8b57"/>
+                </svg>
+            </button>
+        </div>
+        <!-- User Options Section (hidden by default, covers 40% width, fixed position) -->
+        <div id="user-options" style="
+            display:none;
+            position:fixed;
+            top:0;
+            left:0;
+            height:100vh;
+            width:40vw;
+            max-width:320px;
+            background:#fff;
+            box-shadow:2px 0 12px rgba(0,0,0,0.08);
+            z-index:1000;
+            padding:32px 16px 16px 16px;
+            overflow-y:auto;
+            margin-bottom:0;
+        ">
+            <button style="margin:6px 0;width:100%;" onclick="showSection('dashboard')">Dashboard</button>
+            <button style="margin:6px 0;width:100%;" onclick="showSection('feedback')">FeedBack</button>
+            <button style="margin:6px 0;width:100%;" onclick="showSection('lms')">LMS</button>
+            <button style="margin:6px 0;width:100%;" onclick="showSection('examination')">Examination</button>
+            <button style="margin:6px 0;width:100%;" onclick="showSection('student')">Student</button>
+            <button style="margin:6px 0;width:100%;" onclick="showSection('attendance')">Attendance</button>
+            <button style="margin:6px 0;width:100%;" onclick="showSection('fee')">Fee</button>
+            <button style="margin:6px 0;width:100%;" onclick="showSection('grievance')">Grievance</button>
+            <button style="margin:6px 0;width:100%;" onclick="showSection('library')">Library</button>
+            <button style="margin:6px 0;width:100%;" onclick="showSection('questionbank')">Question Bank</button>
+            <hr>
+            <button style="margin:6px 0;width:100%;" onclick="showChangeForm()">Change Password</button>
+            <button style="margin:6px 0;width:100%;" onclick="logout()">Logout</button>
+        </div>
+        <!-- Section display area -->
+        <div id="section-content" class="result"></div>
+        <!-- Remove the Logout and Change Password buttons from outside the menu in your dashboard container -->
+        <!-- Remove these lines from your dashboard HTML: -->
+        <!--
+        <button onclick="logout()">Logout</button>
+        <button onclick="showChangeForm()">Change Password</button>
+        -->
+        <!-- Change Password Form -->
+        <form id="change-form" style="display:none; margin-top:20px;">
+            <label for="new-password">New Password</label>
+            <input type="password" id="new-password" required>
+            <button type="submit">Update</button>
+            <div class="error" id="change-error"></div>
+            <div class="result" id="change-success" style="display:none;"></div>
+        </form>
+    </div>
+    <script>
+        // ===========================
+        // USER DATA SECTION - EDIT HERE
+        // ===========================
+        const defaultUsers = [
+            {
+                id: "BCA2024151", // Username
+                password: "151",
+                name: "Shaurya Shyam",
+                totalClasses: 50,
+                attendedClasses: 45
+            },
+            {
+                id: "BCA2024153",
+                password: "153",
+                name: "Shubham Raj",
+                totalClasses: 50,
+                attendedClasses: 40
+            },
+            {
+                id: "BCA2024174",
+                password: "174",
+                name: "Mohit Narayan",
+                totalClasses: 50,
+                attendedClasses: 48
+            }
+        ];
+        let users = JSON.parse(localStorage.getItem('xaviers_users')) || defaultUsers;
+        // ===========================
+        // END USER DATA SECTION
+        // ===========================
+
+        // Get DOM elements
+        const loginForm = document.getElementById('login-form'); // Login form element
+        const errorMsg = document.getElementById('error-msg'); // Error message element
+        const loginContainer = document.getElementById('login-container'); // Login container
+        const dashboardContainer = document.getElementById('dashboard-container'); // Dashboard container
+        let currentUser = null; // Currently logged in user
+
+        // Login form submit event
+        loginForm.addEventListener('submit', function(e) {
+            e.preventDefault(); // Prevent default form submission
+            const userid = document.getElementById('userid').value.trim(); // Get entered user ID
+            const password = document.getElementById('password').value.trim(); // Get entered password
+            const user = users.find(u => u.id === userid && u.password === password); // Find user
+
+            if (user) {
+                currentUser = user; // Set current user
+                showDashboard(user); // Show dashboard
+            } else {
+                errorMsg.textContent = "Invalid ID or Password. Please try again."; // Show error
+            }
+        });
+
+        // Show dashboard after login
+        function showDashboard(user) {
+            loginContainer.style.display = 'none'; // Hide login
+            dashboardContainer.style.display = 'block'; // Show dashboard
+            document.getElementById('student-name').textContent = user.name;
+            // ...other setup...
+            showSection('dashboard'); // This line shows the dashboard by default
+        }
+
+        // Logout function
+        function logout() {
+            dashboardContainer.style.display = 'none'; // Hide dashboard
+            loginContainer.style.display = 'block'; // Show login
+            loginForm.reset(); // Reset login form
+            errorMsg.textContent = ''; // Clear error
+            currentUser = null; // Clear current user
+        }
+
+        // Show change password form
+        function showChangeForm() {
+            document.getElementById('change-form').style.display = 'block'; // Show change form
+            document.getElementById('change-error').textContent = ''; // Clear error
+            document.getElementById('change-success').style.display = 'none'; // Hide success
+            document.getElementById('new-password').value = ''; // Clear password field
+        }
+
+        // Change password form submit event
+        document.getElementById('change-form').addEventListener('submit', function(e) {
+            e.preventDefault(); // Prevent default form submission
+            const newPassword = document.getElementById('new-password').value.trim(); // Get new password
+            const changeError = document.getElementById('change-error'); // Error element
+            const changeSuccess = document.getElementById('change-success'); // Success element
+
+            if (!newPassword) {
+                changeError.textContent = "Password is required."; // Show error
+                changeSuccess.style.display = 'none'; // Hide success
+                return;
+            }
+
+            // Update user password only
+            currentUser.password = newPassword; // Set new password
+            saveUsers(); // Save changes to localStorage
+            changeError.textContent = ''; // Clear error
+            changeSuccess.textContent = "Password updated successfully!"; // Show success
+            changeSuccess.style.display = 'block'; // Display success message
+        });
+
+        function saveUsers() {
+            localStorage.setItem('xaviers_users', JSON.stringify(users));
+        }
+
+        // Show section content based on button clicked
+        function showSection(section) {
+            const sectionContent = document.getElementById('section-content');
+            switch(section) {
+                case 'dashboard':
+                    // Dashboard content with cards and placeholders
+                    sectionContent.innerHTML = `
+                        <div style="display: flex; flex-wrap: wrap; gap: 16px;">
+                            <div style="flex:1 1 45%;background:#f8f9fa;padding:16px;border-radius:8px;min-width:180px;">
+                                <h3>Total Students</h3>
+                                <div style="font-size:2em;font-weight:bold;">3</div>
+                                <button style="margin-top:8px;width:100%;">View Detail</button>
+                            </div>
+                            <div style="flex:1 1 45%;background:#f8f9fa;padding:16px;border-radius:8px;min-width:180px;">
+                                <h3>Courses</h3>
+                                <div style="font-size:2em;font-weight:bold;">BCA</div>
+                                <button style="margin-top:8px;width:100%;">View Detail</button>
+                            </div>
+                            <div style="flex:1 1 45%;background:#f8f9fa;padding:16px;border-radius:8px;min-width:180px;">
+                                <h3>Absent Count</h3>
+                                <div style="font-size:2em;font-weight:bold;">${
+                                    currentUser ? (currentUser.totalClasses - currentUser.attendedClasses) : '-'
+                                }</div>
+                                <button style="margin-top:8px;width:100%;">View Detail</button>
+                            </div>
+                        </div>
+                        <hr style="margin:24px 0;">
+                        <h3>Monthwise Attendance Report</h3>
+                        <div style="background:#f8f9fa;padding:16px;border-radius:8px;margin-bottom:16px;">
+                            <em>Monthwise attendance data coming soon.</em>
+                        </div>
+                        <!-- Attendance Report Section (Dashboard) -->
+                        <div style="background:#fff;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.08);padding:0 0 24px 0;margin-bottom:24px;">
+                            <div style="background:#222;padding:10px 16px;border-radius:8px 8px 0 0;display:flex;align-items:center;justify-content:space-between;">
+                                <span style="color:#fff;font-weight:bold;">Attendance Report</span>
+                                <span>
+                                    <span style="display:inline-block;width:10px;height:10px;background:#00baff;border-radius:50%;margin-right:4px;"></span>
+                                    <span style="color:#fff;font-size:13px;">●</span>
+                                </span>
+                            </div>
+                            <div style="padding:24px 0 0 0;display:flex;flex-direction:column;align-items:center;">
+                                <!-- Legend -->
+                                <div style="display:flex;gap:24px;margin-bottom:8px;">
+                                    <div style="display:flex;align-items:center;">
+                                        <span style="width:24px;height:10px;background:#00baff;display:inline-block;margin-right:6px;border-radius:2px;"></span>
+                                        <span style="color:#444;">Present</span>
+                                    </div>
+                                    <div style="display:flex;align-items:center;">
+                                        <span style="width:24px;height:10px;background:#b266ff;display:inline-block;margin-right:6px;border-radius:2px;"></span>
+                                        <span style="color:#444;">Absent</span>
+                                    </div>
+                                </div>
+                                <!-- Pie Chart -->
+                                <svg width="220" height="220" viewBox="0 0 32 32">
+                                    <!-- Present arc -->
+                                    <circle r="16" cx="16" cy="16" fill="#fff"/>
+                                    <path
+                                        d="${
+                                            (() => {
+                                                if (!currentUser) return '';
+                                                const percent = currentUser.attendedClasses / currentUser.totalClasses;
+                                                const angle = percent * 360;
+                                                const radians = (angle-90) * Math.PI / 180.0;
+                                                const x = 16 + 16 * Math.cos(radians);
+                                                const y = 16 + 16 * Math.sin(radians);
+                                                const largeArc = percent > 0.5 ? 1 : 0;
+                                                return `M16,16 L16,0 A16,16 0 ${largeArc} 1 ${x},${y} z`;
+                                            })()
+                                        }"
+                                        fill="#00baff"
+                                        stroke="#fff"
+                                        stroke-width="0.5"
+                                    />
+                                    <!-- Absent arc -->
+                                    <path
+                                        d="${
+                                            (() => {
+                                                if (!currentUser) return '';
+                                                const percent = currentUser.attendedClasses / currentUser.totalClasses;
+                                                if (percent === 1) return '';
+                                                const angle = percent * 360;
+                                                const radians = (angle-90) * Math.PI / 180.0;
+                                                const x = 16 + 16 * Math.cos(radians);
+                                                const y = 16 + 16 * Math.sin(radians);
+                                                const largeArc = percent < 0.5 ? 1 : 0;
+                                                return `M16,16 L${x},${y} A16,16 0 ${largeArc} 1 16,0 z`;
+                                            })()
+                                        }"
+                                        fill="#b266ff"
+                                        stroke="#fff"
+                                        stroke-width="0.5"
+                                    />
+                                </svg>
+                                <!-- View Detail link -->
+                                <a href="javascript:void(0)" onclick="showAttendanceDetail()" style="color:#0099ff;display:block;margin-top:12px;text-decoration:none;font-weight:bold;">View Detail &nbsp;<span style='font-size:1.2em;'>&#9432;</span></a>
+                                <div id="attendance-detail" style="display:none;margin-top:16px;background:#f8f9fa;padding:16px 24px;border-radius:8px;text-align:left;min-width:180px;"></div>
+                            </div>
+                        </div>
+                        <h3>Timetable</h3>
+                        <div style="background:#f8f9fa;padding:16px;border-radius:8px;">
+                            <em>Timetable details coming soon.</em>
+                        </div>
+                    `;
+                    break;
+                case 'feedback':
+                    sectionContent.textContent = "Feedback section coming soon.";
+                    break;
+                case 'lms':
+                    sectionContent.textContent = "LMS section coming soon.";
+                    break;
+                case 'examination':
+                    sectionContent.textContent = "Examination section coming soon.";
+                    break;
+                case 'student':
+                    sectionContent.textContent = "Student section coming soon.";
+                    break;
+                case 'attendance':
+                    sectionContent.textContent = "Attendance section coming soon.";
+                    break;
+                case 'fee':
+                    sectionContent.textContent = "Fee section coming soon.";
+                    break;
+                case 'grievance':
+                    sectionContent.textContent = "Grievance section coming soon.";
+                    break;
+                case 'library':
+                    sectionContent.textContent = "Library section coming soon.";
+                    break;
+                case 'questionbank':
+                    sectionContent.textContent = "Question Bank section coming soon.";
+                    break;
+                default:
+                    sectionContent.textContent = "";
+            }
+        }
+
+        // Add this function to your script
+        function showAttendanceDetail() {
+            const detailDiv = document.getElementById('attendance-detail');
+            if (!currentUser) return;
+            detailDiv.innerHTML = `
+                <p><strong>Total Classes:</strong> ${currentUser.totalClasses}</p>
+                <p><strong>Classes Attended:</strong> ${currentUser.attendedClasses}</p>
+                <p><strong>Attendance Percentage:</strong> ${((currentUser.attendedClasses / currentUser.totalClasses) * 100).toFixed(2)}%</p>
+            `;
+            detailDiv.style.display = 'block';
+        }
+
+        // Hamburger menu toggle logic
+        document.getElementById('menu-toggle').addEventListener('click', function(e) {
+            e.stopPropagation(); // Prevent click from bubbling to document
+            const options = document.getElementById('user-options');
+            options.style.display = (options.style.display === 'none' || options.style.display === '') ? 'block' : 'none';
+        });
+
+        // Close the user options menu if clicking outside of it
+        document.addEventListener('click', function(e) {
+            const options = document.getElementById('user-options');
+            const menuToggle = document.getElementById('menu-toggle');
+            if (
+                options.style.display === 'block' &&
+                !options.contains(e.target) &&
+                !menuToggle.contains(e.target)
+            ) {
+                options.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
